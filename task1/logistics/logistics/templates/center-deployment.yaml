@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: center
+spec:
+  selector:
+    matchLabels:
+      app: center
+  template:
+    metadata:
+      labels:
+        app: center
+    spec:
+      containers:
+      - name: center
+        image: center
+        imagePullPolicy: Never
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080

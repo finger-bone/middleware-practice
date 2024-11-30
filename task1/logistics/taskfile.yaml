@@ -1,0 +1,25 @@
+version: '3'
+
+tasks:
+  c:
+    cmds:
+    - kubectl delete all --all --namespace=default
+  b:
+    vars:
+      services: "warehouse mq center delivery"
+    cmds:
+    - gradle clean
+    - |
+      for service in {{.services}}; do
+        cd $service
+        gradle build
+        docker build -t $service .
+        echo "Loading $service image"
+        minikube image load $service:latest
+        cd ..
+      done
+    - helm upgrade --install logistics ./logistics
+  cb:
+    cmds:
+    - task c
+    - task b

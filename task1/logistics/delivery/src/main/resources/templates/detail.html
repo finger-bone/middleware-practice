@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Detail Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center">
+    <header class="bg-blue-600 text-white w-full py-4 shadow">
+        <h1 class="text-center text-2xl font-bold">Delivery Ticket Details</h1>
+    </header>
+    
+    <main class="mt-6 w-11/12 lg:w-3/4">
+        <section class="bg-white shadow-md rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Ticket History</h2>
+            <table class="table-auto w-full border-collapse border border-gray-300 text-left">
+                <thead>
+                    <tr class="bg-blue-100">
+                        <th class="border border-gray-300 px-4 py-2">Identifier</th>
+                        <th class="border border-gray-300 px-4 py-2">State</th>
+                        <th class="border border-gray-300 px-4 py-2">Items</th>
+                    </tr>
+                </thead>
+                <tbody id="ticket-table">
+                    <!-- Ticket rows will be inserted here dynamically -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        // Fetch ticket history and populate the table
+        async function fetchTickets() {
+            try {
+                const response = await fetch('/info');
+                if (!response.ok) throw new Error('Failed to fetch ticket data');
+                const tickets = await response.json();
+
+                const tableBody = document.getElementById('ticket-table');
+                tableBody.innerHTML = ''; // Clear previous rows
+
+                tickets.forEach(ticket => {
+                    const items = ticket.ticketItems.map(item => 
+                        `${item.itemName} (${item.itemCount})`
+                    ).join(', ');
+
+                    const row = `
+                        <tr class="hover:bg-gray-50">
+                            <td class="border border-gray-300 px-4 py-2">${ticket.identifier}</td>
+                            <td class="border border-gray-300 px-4 py-2">${ticket.ticketState}</td>
+                            <td class="border border-gray-300 px-4 py-2">${items}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error fetching tickets:', error);
+                document.getElementById('ticket-table').innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-center text-red-500 py-4">Failed to load ticket data</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Initialize page
+        setTimeout(fetchTickets, 100); // Initial fetch
+    </script>
+</body>
+</html>

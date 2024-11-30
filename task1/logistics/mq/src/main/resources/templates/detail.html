@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message Queue</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div class="container mx-auto p-4">
+        <div class="bg-white shadow-lg rounded-lg p-6">
+            <h1 class="text-3xl font-bold mb-4 text-center">Message Queue Details</h1>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Capacity Graph -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-xl font-semibold mb-2">Capacity Graph</h2>
+                    <canvas id="capacityChart" class="h-64 w-full"></canvas>
+                </div>
+
+                <!-- Messages -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-xl font-semibold mb-2">Messages</h2>
+                    <ul id="messages" class="list-disc pl-5 space-y-1 text-gray-700"></ul>
+                </div>
+            </div>
+
+            <!-- Register Items -->
+            <div class="bg-white mt-6 p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-2">Registered Items</h2>
+                <ul id="registerItems" class="list-disc pl-5 space-y-1 text-gray-700"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables for polling
+        const capacityData = [];
+        const capacityLabels = [];
+        const maxDataPoints = 50; // Max points to show on the graph
+        const pollInterval = 1000; // Poll every 1 seconds
+
+        // Initialize the Chart.js graph
+        const ctx = document.getElementById('capacityChart').getContext('2d');
+        const capacityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: capacityLabels,
+                datasets: [{
+                    label: 'Remaining Capacity',
+                    data: capacityData,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: false,
+                scales: {
+                    x: { title: { display: true, text: 'Time' } },
+                    y: { 
+                        title: { display: true, text: 'Capacity' }, 
+                        beginAtZero: true, 
+                    },
+                }
+            }
+        });
+
+        // Function to fetch data and update the page
+        async function fetchData() {
+            try {
+                const response = await fetch('/info');
+                const data = await response.json();
+
+                // Update capacity graph
+                if (capacityLabels.length >= maxDataPoints) {
+                    capacityLabels.shift();
+                    capacityData.shift();
+                }
+                const now = new Date();
+                capacityLabels.push(now.toLocaleTimeString());
+                capacityData.push(data.capacity);
+                capacityChart.update();
+
+                // Update messages list
+                const messagesList = document.getElementById('messages');
+                messagesList.innerHTML = '';
+                data.messages.forEach(message => {
+                    const li = document.createElement('li');
+                    li.textContent = `${message.message} - Topics: ${message.topic.join(', ')}`;
+                    messagesList.appendChild(li);
+                });
+
+                // Update registered items list
+                const registerItemsList = document.getElementById('registerItems');
+                registerItemsList.innerHTML = '';
+                data.registerItems.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = `ID: ${item.identifier}, Callback: ${item.callback}, Topics: ${item.topics.join(', ')}`;
+                    registerItemsList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        // Start polling
+        setInterval(fetchData, pollInterval);
+
+        // Fetch initial data
+        fetchData();
+    </script>
+</body>
+</html>
