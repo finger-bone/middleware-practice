@@ -49,7 +49,7 @@ public class Dispatcher {
     private Mono<Void> dispatch(Message message, String callback) {
         try {
             var encoded = objectMapper.writeValueAsString(message.toRecord());
-            log.info("Dispatching message: " + encoded);
+            log.info("Dispatching message: " + encoded + "to: " + callback);
             return webClient.post()
             .uri(callback)
             .contentType(MediaType.APPLICATION_JSON)
